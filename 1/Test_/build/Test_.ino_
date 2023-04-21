@@ -1,0 +1,338 @@
+/*
+
+вместо Serial.print, Serial.println- используем       Serial.printf
+вместо delay,таймеров на if (millis()  - используем Scheduler userScheduler
+
+задача кода определить ноды которые соедени меду сабой  rssi (STA<>AP) Power  или  Power (AP<>STA) rssi при подключении они говарят какой тип подключения и обмениваются данными. AP отпавряет свой TX A STA отправляет rss.
+Получаем BestAp noda для дальнейшер работы
+и выводим статус сети в которо видно текущее состоние.
+
+Проговаривать  это не нужно !!!Ипользуем бибоиотеку PainlessMesh 1.5.0:
+*/
+
+#include <ArduinoJson.h>
+#include <painlessMesh.h>
+#include <vector>
+#define MESH_SSID "mesh"
+#define MESH_PASSWORD "password"
+#define MESH_PORT 5555
+
+DynamicJsonDocument doc(1024);
+JsonArray connections = doc.to<JsonArray>();
+
+uint32_t thisNodeId;
+uint32_t bestNodeId;
+void sendInfo(uint32_t to);
+
+Scheduler userScheduler;
+painlessMesh mesh;
+String nodeType = "WIFI_OFF";
+int NodesConnect = 0;
+int APClients = 0;
+
+String getJsonArrayString() {
+  String result;
+  serializeJson(doc, result);
+  return result;
+}
+struct NodeData {
+  unsigned long time;
+  int nodeId;
+  String thisType;
+  int localRSSI;
+  int txPower;
+};
+
+void updateNodeData(NodeData &nodeData) {
+  // Обновление данных узла здесь
+  if (nodeData.thisType == "STA") {
+    nodeData.localRSSI = -34;  // Замените на ваше локальное значение RSSI
+  }
+  Serial.print("NodeID: ");
+  Serial.print(nodeData.nodeId);
+  Serial.print(" Type: ");
+  Serial.print(nodeData.thisType);
+  Serial.print(" RSSI: ");
+  Serial.print(nodeData.localRSSI);
+  Serial.print(" TxPower: ");
+  Serial.println(nodeData.txPower);
+}
+
+void processJsonArray(const JsonArray &jsonArray) {
+  for (JsonObject item : jsonArray) {
+    NodeData nodeData;
+    nodeData.time = item["time"];
+    nodeData.nodeId = item["nodeId"];
+    nodeData.thisType = item["ThisType"].as<String>();
+    nodeData.localRSSI = item["localRSSI"];
+    nodeData.txPower = item["TxPower"];
+
+    updateNodeData(nodeData);
+  }
+}
+void printNodeStatus();
+Task taskPrintNodeStatus(30000, TASK_FOREVER, &printNodeStatus);
+
+
+void setup() {
+  Serial.begin(115200);
+
+  mesh.setDebugMsgTypes(ERROR | DEBUG | CONNECTION);
+  mesh.init(MESH_SSID, MESH_PASSWORD, &userScheduler, MESH_PORT);
+  mesh.onReceive(&receivedCallback);
+  mesh.onNewConnection(&newConnectionCallback);
+  mesh.onChangedConnections(&changedConnectionCallback);
+
+  userScheduler.addTask(taskPrintNodeStatus);
+  thisNodeId = mesh.getNodeId();
+
+  taskPrintNodeStatus.enable();
+}
+
+void loop() {
+  static unsigned long lastCleanTime = 0;
+  unsigned long cleanInterval = 60000;  // Удалять подключения старше 1 минуты (60000 мс)
+
+  userScheduler.execute();
+  mesh.update();
+
+  if (millis() - lastCleanTime > cleanInterval) {
+    removeOldConnections(cleanInterval);
+    lastCleanTime = millis();
+  }
+}
+
+void receivedCallback(uint32_t from, String &msg) {
+  DynamicJsonDocument receivedDoc(1024);
+  deserializeJson(receivedDoc, msg);
+
+  updateJsonArray(from, receivedDoc["ThisType"], receivedDoc["RSSI"], receivedDoc["TxPower"]);
+  Serial.println(getJsonArrayString());
+}
+
+void newConnectionCallback(uint32_t nodeId) {
+  sendInfo(nodeId);
+}
+
+void changedConnectionCallback() {
+  for (auto nodeId : mesh.getNodeList()) {
+    sendInfo(nodeId);
+  }
+}
+void updateJsonArray(uint32_t nodeId, String thisType, int rssi, int txPower) {
+  Serial.printf("Updating JsonArray with nodeId: %u, thisType: %s, rssi: %d, txPower: %d\n", nodeId, thisType.c_str(), rssi, txPower);
+  bool updated = false;
+  for (size_t i = 0; i < connections.size(); i++) {
+    JsonObject connection = connections[i];
+    uint32_t id = connection["nodeId"];
+    if (id == nodeId) {
+      updated = true;
+      connection["ThisType"] = thisType;
+      connection["RSSI"] = rssi;
+      connection["TxPower"] = txPower;
+      connection["time"] = millis();
+      break;
+    }
+  }
+
+  if (!updated) {
+    JsonObject connection = connections.createNestedObject();
+    connection["time"] = millis();
+    connection["nodeId"] = nodeId;
+    connection["ThisType"] = thisType;
+    connection["RSSI"] = rssi;
+    connection["TxPower"] = txPower;
+  }
+  updateBestNode();
+}
+
+void sendInfo(uint32_t to) {
+  DynamicJsonDocument responseDoc(1024);
+  String nodeType;
+  bool hasClients = (WiFi.softAPgetStationNum() > 0);
+
+  if ((WiFi.getMode() == WIFI_STA || WiFi.getMode() == WIFI_AP_STA) && !hasClients) {
+    nodeType = "STA";
+    responseDoc["ThisType"] = nodeType;
+    responseDoc["RSSI"] = WiFi.RSSI();
+  } else if (WiFi.getMode() == WIFI_AP || (WiFi.getMode() == WIFI_AP_STA && hasClients)) {
+    nodeType = "AP";
+    responseDoc["ThisType"] = nodeType;
+    responseDoc["TxPower"] = WiFi.getTxPower();
+  } else {
+    nodeType = "UNKNOWN";
+    responseDoc["ThisType"] = nodeType;
+  }
+
+  String msg;
+  serializeJson(responseDoc, msg);
+
+  mesh.sendSingle(to, msg);
+  Serial.println("Send sendInfo node:" + String(to));
+}
+
+
+String getBestAP(const String &log) {
+  const char *bestAPStr = "Best AP is ";
+  const char *endStr = "<---";
+
+  const char *bestAPPos = strstr(log.c_str(), bestAPStr);
+  const char *endPos = strstr(log.c_str(), endStr);
+
+  if (bestAPPos && endPos) {
+    String bestAP = log.substring(bestAPPos - log.c_str() + strlen(bestAPStr), endPos - log.c_str());
+    return bestAP;
+  } else {
+    return "";
+  }
+}
+
+void parseLog(const String &log) {
+  String bestAP = getBestAP(log);
+
+  if (bestAP != "") {
+    Serial.println("Best AP found in log: " + bestAP);
+  } else {
+    Serial.println("Best AP not found in log");
+  }
+}
+
+void printNodeStatus() {
+  PrintWifiStatus();
+  printlistConnect();
+  String json = mesh.subConnectionJson();
+  Serial.println(json);
+  //connectToAP();
+}
+
+
+void removeOldConnections(unsigned long timeout) {
+  for (size_t i = 0; i < connections.size();) {
+    JsonObject connection = connections[i];
+    unsigned long connectionTime = connection["time"].as<unsigned long>();
+
+    if (millis() - connectionTime > timeout) {
+      connections.remove(i);
+    } else {
+      ++i;
+    }
+  }
+}
+
+void updateBestNode() {
+  int bestRssi = -999;
+  bestNodeId = 0;
+
+  for (size_t i = 0; i < connections.size(); i++) {
+    JsonObject connection = connections[i];
+    if (connection.containsKey("RSSI") && connection["ThisType"].as<String>() == "AP") {
+      int rssi = connection["RSSI"].as<int>();
+      if (rssi > bestRssi) {
+        bestRssi = rssi;
+        bestNodeId = connection["nodeId"].as<uint32_t>();
+      }
+    }
+  }
+}
+
+float calculateDistance(int rssi, int txPower) {
+  if (rssi == 0 || txPower == 0) {
+    return -1.0;  // Расстояние не может быть определено
+  }
+
+  // FSPL в дБ = 20 * log10(d) + 20 * log10(f) + 20 * log10(4 * pi / c)
+  // где d - расстояние (м), f - частота (Гц) и c - скорость света (м/с)
+  // Значение RSSI = TxPower - FSPL
+
+  float frequency = 2400.0 * 1e6;  // 2.4 ГГц
+                                   //  float speedOfLight = 3.0 * 1e8; // м/с
+
+  // Решаем уравнение относительно d
+  float distance = pow(10.0, (txPower - rssi - 20.0 * log10(frequency) + 147.55) / 20.0);
+
+  return distance;
+}
+
+
+void PrintWifiStatus() {
+  NodesConnect = 0;
+  APClients = WiFi.softAPgetStationNum();
+  if (WiFi.getMode() == WIFI_AP) {
+    nodeType = "WIFI_AP";
+  } else if (WiFi.getMode() == WIFI_STA) {
+    nodeType = "WIFI_STA";
+  } else if (WiFi.getMode() == WIFI_AP_STA) {
+    nodeType = "WIFI_AP_STA";
+  } else {
+    nodeType = "WIFI_OFF";
+  }
+  Serial.printf("===== Статус текущего узла сети =====\nID узла: %u\nТип узла: %s\n", thisNodeId, nodeType.c_str());
+  if (WiFi.RSSI()) {
+    Serial.printf("WIFI_STA RSSI:%d  SSID:%s\n", WiFi.RSSI(), WiFi.SSID().c_str());
+  }
+  if (APClients) {
+    Serial.printf("WIFI_AP Power: %d\n", WiFi.getTxPower());
+  }
+  NodesConnect = WiFi.RSSI() ? APClients + 1 : APClients;
+  Serial.printf("Connect This Node: %d\nConnect This AP: %d\nBest node: %u\n", NodesConnect, APClients, bestNodeId);
+}
+
+
+JsonObject findConnection(uint32_t nodeId) {
+  for (size_t i = 0; i < connections.size(); i++) {
+    JsonObject connection = connections[i];
+    uint32_t id = connection["nodeId"];
+    if (id == nodeId) {
+      return connection;
+    }
+  }
+  return JsonObject();
+}
+
+void printlistConnect() {
+  // Парсинг JSON-документа с информацией о подключениях
+  DynamicJsonDocument connectionDoc(1024);
+  String connectionJson = mesh.subConnectionJson();
+  deserializeJson(connectionDoc, connectionJson);
+
+  JsonObject rootNode = connectionDoc.as<JsonObject>();
+  JsonArray directConnections = rootNode["subs"].as<JsonArray>();
+
+  Serial.println("===== Список подключений =====");
+  if (directConnections.size() == 0) {
+    Serial.println("Подключений нет.");
+  } else {
+    for (JsonObject connection : directConnections) {
+      uint32_t nodeId = connection["nodeId"].as<uint32_t>();
+
+      JsonObject connInfo = findConnection(nodeId);
+      if (!connInfo.isNull()) {
+        String thisType = connInfo["ThisType"].as<String>();
+        int rssi = connInfo["RSSI"].as<int>();
+        int txPower = connInfo["TxPower"].as<int>();
+
+        if (thisType == "AP_STA") {
+          if (rssi != -999 && rssi != 0) {
+            thisType = "STA";
+          } else if (txPower != -999 && txPower != 0) {
+            thisType = "AP";
+          }
+        }
+
+        Serial.printf("Подключен ID: %u --- ", nodeId);
+
+        if (thisType == "STA") {
+          float distance = calculateDistance(rssi, txPower);
+          Serial.printf("RSSI: %d STA <> AP Power: %d --> Long: %.2f\n", rssi, txPower, distance);
+        } else if (thisType == "AP") {
+          float distance = calculateDistance(rssi, txPower);
+          Serial.printf("Power: %d AP <> STA RSSI: %d --> Long: %.2f\n", txPower, rssi, distance);
+        } else {
+          Serial.println(" --->> Неизвестный тип узла");
+        }
+      }
+    }
+  }
+
+  Serial.println(connectionJson);
+}
