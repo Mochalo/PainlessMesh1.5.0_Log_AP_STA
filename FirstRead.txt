@@ -1,4 +1,4 @@
-Используем библиотеку PainlessMesh 1.5.0 на Arduino Ide
+Используем библиотеку PainlessMesh 1.5.0 на Arduino Ide Разбивая на функции с переносам на другие листына ё листе просто названия функций чтоб выполнения на втором.
 Вместо Serial.print, Serial.println используем Serial.printf (группируем printf)
 Вместо delay, таймеров на if (millis() используем Scheduler userScheduler
 На основе лога выделяем нужные значения, создаем временный массив с нужными данными (анализируем log.txt)
@@ -6,7 +6,7 @@
 Создаём структуру  для хранения данных 
 
 Пример кода с использованием userScheduler:
-
+WIFI Есть в библиотеке  painlessMesh.h
 
 Это не код это приме Scheduler {
 #include <painlessMesh.h>
