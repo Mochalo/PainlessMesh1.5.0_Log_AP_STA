@@ -31,7 +31,9 @@ void loop() {
   userScheduler.execute();
 }
 }
-Весь код находится по ссылке: https://github.com/Mochalo/PainlessMesh1.5.0_Log_AP_STA
-
+Весь код находится по ссылке: https://github.com/Mochalo/PainlessMesh1.5.0
+Программа Test_.ino
+log  Log.txt
+Инструкция FirstRead.txt
 Код мне выводить разбивай по функциям и нумируя
 если я ковори посмотри за по ссылке https://github.com/Mochalo/PainlessMesh1.5.0_Log_AP_STA
