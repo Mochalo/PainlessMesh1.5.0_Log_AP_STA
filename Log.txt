@@ -1,0 +1,91 @@
+08:34:40.771 -> CONNECTION: scanComplete():-- > Cleared old APs.
+08:34:40.771 -> CONNECTION: scanComplete(): num = 4
+08:34:40.771 -> CONNECTION: 	found : your_mesh_ssid, -27dBm
+08:34:40.771 -> CONNECTION: 	found : your_mesh_ssid, -35dBm
+08:34:40.771 -> CONNECTION: 	found : your_mesh_ssid, -39dBm
+08:34:40.771 -> CONNECTION: 	Found 3 nodes
+08:34:40.771 -> GENERAL: encodeNodeId():
+08:34:40.815 -> GENERAL: encodeNodeId():
+08:34:40.815 -> GENERAL: encodeNodeId():
+08:34:40.815 -> CONNECTION: connectToAP(): No unknown nodes found scan rate set to normal
+08:34:42.100 -> SYNC: nodeSyncTask(): request with 3460925461
+08:34:42.304 -> COMMUNICATION: routePackage(): Recvd from 3460925461: {"nodeId":3460925461,"subs":[{"nodeId":2118353933,"subs":[{"nodeId":3460898661}]}],"type":6,"dest":3461032857,"from":3460925461}
+08:34:42.304 -> SYNC: handleNodeSync(): with 3460925461
+08:34:55.570 -> ------------------------
+08:34:55.570 -> Mesh ST:Enabled
+08:34:55.570 -> Node ID: 3461032857
+08:34:55.570 -> Mesh clients: 3
+08:34:55.570 -> ________________________
+08:34:55.570 -> Status WIFI Information:
+08:34:55.570 -> ------------------------
+08:34:55.570 -> Local clients connected: 1
+08:34:55.603 -> Wifi connected: false
+08:34:55.603 -> ------------------------
+08:34:55.603 -> AP clients: 1
+08:34:55.603 -> AP Information:
+08:34:55.603 -> AP IP address: 10.43.153.1
+08:34:55.603 -> AP Tx Power: 78 dBm
+08:34:55.603 -> ________________________
+08:34:55.603 -> 
+08:34:55.603 -> Free heap memory: 225140 bytes
+08:34:55.603 -> {"nodeId":3461032857,"subs":[{"nodeId":3460925461,"subs":[{"nodeId":2118353933,"subs":[{"nodeId":3460898661}]}]}]}
+08:34:55.603 -> Node types:
+08:34:55.603 -> 
+08:34:55.603 -> {"nodeId":3461032857,"subs":[{"nodeId":3460925461,"subs":[{"nodeId":2118353933,"subs":[{"nodeId":3460898661}]}]}]}
+08:34:55.818 -> CONNECTION: stationScan(): your_mesh_ssid
+08:34:55.887 -> CONNECTION: eventScanDoneHandler: ARDUINO_EVENT_WIFI_SCAN_DONE
+08:34:55.887 -> CONNECTION: scanComplete(): Scan finished
+08:34:55.887 -> CONNECTION: scanComplete():-- > Cleared old APs.
+08:34:55.887 -> CONNECTION: scanComplete(): num = 4
+08:34:55.887 -> CONNECTION: 	found : your_mesh_ssid, -27dBm
+08:34:55.887 -> CONNECTION: 	found : your_mesh_ssid, -37dBm
+08:34:55.887 -> CONNECTION: 	found : your_mesh_ssid, -39dBm
+08:34:55.887 -> CONNECTION: 	Found 3 nodes
+08:34:55.887 -> GENERAL: encodeNodeId():
+08:34:55.887 -> GENERAL: encodeNodeId():
+08:34:55.928 -> GENERAL: encodeNodeId():
+08:34:55.928 -> CONNECTION: connectToAP(): No unknown nodes found scan rate set to normal
+
+
+8:35:48.176 -> GENERAL: encodeNodeId():
+08:35:48.176 -> GENERAL: encodeNodeId():
+08:35:48.176 -> CONNECTION: connectToAP(): Best AP is 3460925461<---
+08:35:48.176 -> CONNECTION: connectToAP(): Trying to connect, scan rate set to 4*normal
+08:35:49.216 -> CONNECTION: eventSTAGotIPHandler: ARDUINO_EVENT_WIFI_STA_GOT_IP
+08:35:49.216 -> GENERAL: tcpConnect():
+08:35:49.216 -> CONNECTION: New STA connection incoming
+08:35:49.248 -> CONNECTION: painlessmesh::Connection: New connection established.
+08:35:49.248 -> SYNC: nodeSyncTask(): request with 0
+08:35:49.248 -> MESH_STATUS: Changed connections in neighbour 0
+08:35:49.282 -> MESH_STATUS: Dropped connection 0, station 1
+08:35:49.282 -> CONNECTION: eraseClosedConnections():
+08:35:49.282 -> CONNECTION: connectToAP(): Unknown nodes found. Current stability: 0
+08:35:49.282 -> CONNECTION: eventSTADisconnectedHandler: ARDUINO_EVENT_WIFI_STA_DISCONNECTED
+08:35:49.282 -> MESH_STATUS: Dropped connection 0, station 1
+08:35:49.282 -> CONNECTION: eraseClosedConnections():
+08:35:49.282 -> GENERAL: encodeNodeId():
+08:35:49.282 -> CONNECTION: connectToAP(): Best AP is 3460898661<---
+08:35:49.322 -> CONNECTION: connectToAP(): Trying to connect, scan rate set to 4*normal
+08:35:49.998 -> CONNECTION: eventSTAGotIPHandler: ARDUINO_EVENT_WIFI_STA_GOT_IP
+08:35:49.998 -> GENERAL: tcpConnect():
+08:35:50.031 -> CONNECTION: New STA connection incoming
+08:35:50.031 -> CONNECTION: painlessmesh::Connection: New connection established.
+08:35:50.031 -> SYNC: nodeSyncTask(): request with 0
+08:35:50.076 -> MESH_STATUS: Changed connections in neighbour 0
+08:35:50.076 -> MESH_STATUS: Dropped connection 0, station 1
+08:35:50.076 -> CONNECTION: eraseClosedConnections():
+08:35:50.076 -> CONNECTION: connectToAP(): Unknown nodes found. Current stability: 0
+08:35:53.157 -> CONNECTION: New AP connection incoming
+08:35:53.157 -> CONNECTION: painlessmesh::Connection: New connection established.
+08:35:53.157 -> COMMUNICATION: routePackage(): Recvd from 0: {"nodeId":3460925461,"subs":[{"nodeId":2118353933,"subs":[{"nodeId":3460898661}]}],"type":5,"dest":0,"from":3460925461}
+08:35:53.191 -> SYNC: handleNodeSync(): with 0
+08:35:53.191 -> CONNECTION: newConnectionTask():
+08:35:53.191 -> CONNECTION: newConnectionTask(): adding 3460925461 now= 5880684
+08:35:53.191 -> MESH_STATUS: New connection 3460925461
+08:35:53.191 -> 1970-01-01 00:00:05: Detected new AP connection from node 2147483647
+08:35:53.191 -> 1970-01-01 00:00:05: log: New AP Connection, nodeId = 3460925461, connected to 3461032857
+08:35:53.224 -> MESH_STATUS: Changed connections in neighbour 3460925461
+08:35:53.224 -> 1970-01-01 00:00:05: Removing inactive node: 2147483647
+08:35:53.256 -> COMMUNICATION: routePackage(): Recvd from 3460925461: {"type":4,"dest":3461032857,"from":3460925461,"msg":{"type":0}}
+08:35:53.256 -> COMMUNICATION: routePackage(): Recvd from 3460925461: {"type":4,"dest":3461032857,"from":3460925461,"msg":{"type":2,"t0":5953509,"t1":88440221,"t2":88450972}}
+08:35:53.521 -> COMMUNICATION: routePackage(): Recvd from 3460925461: {"type":4,"dest":3461032857,"from":3460925461,"msg":{"type":2,"t0":88664995,"t1":88678143,"t2":88688770}}
